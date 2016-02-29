@@ -1,5 +1,3 @@
-
-
 import ddf.minim.*;
 import ddf.minim.analysis.*;
 import ddf.minim.signals.*;
@@ -7,24 +5,27 @@ import controlP5.*;
 import processing.opengl.*;
 
 
- 
 
+//External classes
 ControlP5 cp5;
-
-Slider abc;
-Circle circle;
-Line line;
-Line3d line3d; 
-
 Minim minim;
 AudioPlayer song;
 AudioInput input;
 FFT fft;
 BeatDetect beat;
-
 UI ui;
+
+//Own classes
+Circle circle;
 Circle2 circle2;
 Circle3 circle3;
+Line line;
+Line3d line3d; 
+
+
+
+
+//Variable declerations
 
 float ring_difference = 100;
 float angle_inner, radius_outer, angle_outer;
@@ -50,7 +51,6 @@ void setup()
 {
   smooth();
   noStroke();
- // frameRate(40);
 
 
   //layout stuff 
@@ -65,17 +65,10 @@ void setup()
   textAlign(LEFT);
   textureMode(NORMAL);
 
-  //
+  //start the UI 
   cp5 = new ControlP5(this);
   // always start Minim first!
   minim = new Minim(this);
-  
-   // song = minim.loadFile(".mp3");
-  
-  // play the file from start to finish.
-  // if you want to play the file again, 
-  // you need to call rewind() first.
-  //song.play();
 
   ui = new UI();
   ui.init();
@@ -91,20 +84,10 @@ void setup()
   circle = new Circle();
   line = new Line();
   line3d = new Line3d();
- 
 
-
-  // specify 512 for the length of the sample buffers
-  // the default buffer size is 1024
-
-  // an FFT needs to know how 
-  // long the audio buffers it will be analyzing are
-  // and also needs to know 
-  // the sample rate of the audio it is analyzing
   fft = new FFT(input.bufferSize(), input.sampleRate());
   println(fft.specSize());
   numPoints = fft.specSize();
-
 
   angle_inner=TWO_PI/(float)numPoints;
 
@@ -115,84 +98,81 @@ void setup()
 void draw() {
 
 
-
+  //Regularly print the framerate
   if (frameCount % 40 == 0) {
     print("fps: ");
     println(frameRate);
   }
 
-  beat.detect(input.mix);
   noStroke();
 
   if (beat.isSnare() && background_flash) {
     background(random(255), random(255), 60); //creating a flashing backgruond on each detected snare hit
   }
 
-
+  //If you want we can show the fps in the window as well
   if (show_fps) {
     colorMode(RGB, 60);
     fill(0);
     fill((frameRate - 60), frameRate, 40);
     text(int(frameRate) + " fps", 0, 10);
   }
-  /*textSize(50);
-   textMode(CENTER);
-   text("DEMO MODE", 150, 150);
-   text("DEMO MODE", 250, 350);
-   text("DEMO MODE", 550, 150);
-   text("NOT FOR COMMERCIAL USE", 0/2, height/2);
-   */
-
+  //analyse the input's buffer frequency domain
   fft.forward(input.mix); 
   numPoints = fft.specSize();
   colorMode(RGB, 255);
+  //beat detect on the input buffer
+  beat.detect(input.mix);
 
-
-  //println(rotate);
-  if (rotate < 1000) {
+  if (rotate < 1000) { //wrapping the rotation. Once it get over 1000 it resets. 
     rotate = rotate + rotatespeed;
   } else {
     rotate = 0;
   }
   if (line3dbo == false) {
-    camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
+    camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0); //set camera to the default settings when the 3d mode is off.
   }
-  fill(0, 0, 0, alpha);
+  fill(0, 0, 0, alpha); //alpha determines the amount of motion blur 
   rect(- width * 2, -height * 2, width * 10, height * 10);// THIS IS THE BACKGROUND
   fill(255);
 
-  master = input.mix.level();
-  //println("master : " , master);
+  master = input.mix.level(); // fill the master variable with the 'master' volume of the input
 
-
+  //Mapping stroke_weight UI widget to strokeWeight()
   strokeWeight(stroke_weight);
   if (stroke_weight == 0 ) {
     noStroke();
   }
 
-
+  //update mode 1
   if (circlebo == true) {
     circle.update(rotate);
   } 
 
+  //update mode 2
   if (line3dbo) {
     line3d.update();
   } else {
     camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
   }
-  //rect(width/2, height/2, 100, 100);
+
+  //update mode 3
   if (linear) {
     line.update();
   }
 
+  //update mode 4
   if (circle2bo) {
     circle2.update(gain);
   }    
 
+  //update mode 5
   if (circle3bo) {
     circle3.update();
   }
+
   //Beat detector shizzle:
+  //making sure shit doesn't get out of hand
   kickSize = constrain(kickSize * 0.95, 16, 32);
   snareSize = constrain(snareSize * 0.95, 16, 32);
   hatSize = constrain(hatSize * 0.95, 16, 32);
@@ -200,10 +180,6 @@ void draw() {
   if (beat.isKick()) {
     strokeWeight(stroke_weight + 100);
   }
-  // </beat_detector_shizzle>
-
-  //sending image to external application
-
 }
 
 
